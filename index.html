@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stripe Payment</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; }
+    #card-element { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    .btn { background: #635bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>Complete Payment</h2>
+  <form id="payment-form">
+    <label>Card Info</label>
+    <div id="card-element"></div>
+    <button type="submit" class="btn">Pay $10</button>
+    <div id="payment-message" style="margin-top: 10px;"></div>
+  </form>
+
+  <script>
+    const stripe = Stripe('pk_test_REPLACE_WITH_YOURS'); // 🛑 REPLACE THIS
+
+    const elements = stripe.elements();
+    const card = elements.create('card');
+    card.mount('#card-element');
+
+    const form = document.getElementById('payment-form');
+    const messageDiv = document.getElementById('payment-message');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      // Step 1: Create payment intent
+      const res = await fetch('https://stripe-backend-production-3197.up.railway.app/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 1000 }) // $10.00
+      });
+
+      const data = await res.json();
+      const clientSecret = data.clientSecret;
+
+      // Step 2: Confirm card payment
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: card
+        }
+      });
+
+      if (result.error) {
+        messageDiv.textContent = "❌ " + result.error.message;
+      } else {
+        if (result.paymentIntent.status === 'succeeded') {
+          messageDiv.textContent = "✅ Payment succeeded!";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
