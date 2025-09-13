@@ -20,8 +20,6 @@
 
   <script>
     const stripe = Stripe("pk_live_51S6hbQ8i65a5WidubEEp0yPfQjo2ed1pbkRtRsKNKiFlQGZ5TYw6Z9SCn8p82LO4ewDMjEPPlqimsyuPx35iXDwp00N5lVbN6q");
-); // 
-
     const elements = stripe.elements();
     const card = elements.create('card');
     card.mount('#card-element');
