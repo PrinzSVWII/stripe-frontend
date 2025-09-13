@@ -19,39 +19,61 @@
   </form>
 
   <script>
-    const stripe = Stripe("pk_live_51S6hbQ8i65a5WidubEEp0yPfQjo2ed1pbkRtRsKNKiFlQGZ5TYw6Z9SCn8p82LO4ewDMjEPPlqimsyuPx35iXDwp00N5lVbN6q");
-    const elements = stripe.elements();
-    const card = elements.create('card');
-    card.mount('#card-element');
+const stripe = Stripe("pk_live_51S6hbQ8i65a5WidubEEp0yPfQjo2ed1pbkRtRsKNKiFlQGZ5TYw6Z9SCn8p82LO4ewDMjEPPlqimsyuPx35iXDwp00N5lVbN6q"); // 
+const elements = stripe.elements();
+const card = elements.create('card');
+card.mount('#card-element');
 
-    const form = document.getElementById('payment-form');
-    const messageDiv = document.getElementById('payment-message');
+// Get DOM elements
+const form = document.getElementById('payment-form');
+const messageDiv = document.getElementById('payment-message');
+const submitButton = document.getElementById('submit-button');
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-      // Step 1: Create payment intent
-      const res = await fetch('https://stripe-backend-production-3197.up.railway.app/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 1000 }) // $10.00
-      });
+  // 🔄 Disable button and show loading message
+  submitButton.disabled = true;
+  submitButton.textContent = "Processing...";
+  messageDiv.textContent = "";
 
-      const data = await res.json();
-      const clientSecret = data.clientSecret;
+  try {
+    // 🔐 Step 1: Create Payment Intent
+    const res = await fetch('https://stripe-backend-production-3197.up.railway.app/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: 1000 }) // $10
+    });
 
-      // Step 2: Confirm card payment
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: card
-        }
-      });
+    const data = await res.json();
+    const clientSecret = data.clientSecret;
 
-      if (result.error) {
-        messageDiv.textContent = "❌ " + result.error.message;
-      } else {
-        if (result.paymentIntent.status === 'succeeded') {
-          messageDiv.textContent = "✅ Payment succeeded!";
+    // 💳 Step 2: Confirm Card Payment
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: card
+      }
+    });
+
+    if (result.error) {
+      // ❌ Show error
+      messageDiv.textContent = "❌ " + result.error.message;
+    } else {
+      if (result.paymentIntent.status === 'succeeded') {
+        // ✅ Show success
+        messageDiv.textContent = "✅ Payment succeeded!";
+      }
+    }
+
+  } catch (error) {
+    messageDiv.textContent = "❌ An error occurred: " + error.message;
+  }
+
+  // 🔄 Re-enable button
+  submitButton.disabled = false;
+  submitButton.textContent = "Pay $10";
+});
+
         }
       }
     });
